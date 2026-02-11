@@ -93,3 +93,78 @@ fmse = F.mse_loss(a_3,mean_7).sqrt()
 print(f"FastAI L1 Loss: {f1l}")
 print(f"FastAI MSE Loss: {fmse}")
 
+#Calculate the mean absolute error
+valid_3_tens = torch.stack([tensor(Image.open(o)) for o in (path/'valid'/'3').ls()])
+valid_7_tens = torch.stack([tensor(Image.open(o)) for o in (path/'valid'/'7').ls()])
+valid_7_tens = valid_7_tens.float()/255
+valid_3_tens = valid_3_tens.float()/255
+
+
+def mnist_distance(a,b):
+    return (a-b).abs().mean((-1,-2))
+
+#print("Mean Abs Error = " , mnist_distance(a_3,mean_3))
+
+def is_3(x):
+    return mnist_distance(x,mean_3) < mnist_distance(x,mean_7)
+
+print("Is a 3? ", is_3(a_3))
+print("Is a 3? ", is_3(a_3).float())
+
+print(is_3(valid_3_tens))
+
+accuracy_3s = is_3(valid_3_tens).float().mean()
+# use logical_not (~) to invert the boolean mask and call mean()
+accuracy_7s = (~is_3(valid_7_tens)).float().mean()
+print(f"Accuracy on 3s: {accuracy_3s:.4f}")
+print(f"Accuracy on 7s: {accuracy_7s:.4f}")
+print("Overall Accuracy: ", (accuracy_3s + accuracy_7s)/2)
+
+###################################
+##
+### Stochastic Gradient Descent
+##
+###################################
+
+#def pr_eight(x,w) : (x*w).sum()
+
+def f(x): return x**2
+
+
+#plot_function(f,'f','x**2')
+
+xt = tensor(3.0).requires_grad_()
+
+yt = f(xt)
+#print(f"Value of f(3): {yt}")
+yt.backward() #compute the gradient
+#print(f"Gradient of f at 3: {xt.grad}") #print the gradient 
+
+xt = tensor([3.,4.,10.]).requires_grad_()
+
+def f(x): return (x**2).sum()
+
+yt = f(xt)
+#print(f"Value of f(xt): {yt}")
+yt.backward() #compute the gradient
+#print(f"Gradient of f at xt: {xt.grad}") #print the gradient
+
+
+###################################
+##
+### Stepping with a Learning Rate
+##
+## An End-to-End SGD Example
+###################################
+
+time = torch.arange(0.,20).float()
+print(time)
+
+speed = torch.randn(20)*3 + 0.75*(time-9.5)**2 +1
+plt.scatter(time,speed)
+plt.xlabel('Time')
+plt.ylabel('Speed')
+plt.title('Time vs Speed')
+plt.savefig('time_speed.png')
+plt.close()
+
